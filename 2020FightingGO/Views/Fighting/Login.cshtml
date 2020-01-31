@@ -1,0 +1,81 @@
+﻿
+@{
+	Layout = "~/Views/Shared/View_Layout.cshtml";
+}
+
+<script type="text/javascript" src="http://g.alicdn.com/dingding/open-develop/1.5.1/dingtalk.js"></script>
+<div id="app">
+
+</div>
+<script type="text/javascript">
+	var app = new Vue({
+		el: "#app",
+		data: {
+			code: "123",
+		},
+		created: function () {
+			this.login();
+		},
+		methods: {
+
+			login: function () {
+				//let urlx = '/Fighting/LoginInX';
+				//this.$http.post(urlx, { code: "123" }, { emulateJSON: true }).then(function (res) {
+				//	alert(res.body)
+				//	if (res.body == 1) {
+				//		self.location.href = "/Fighting/Index"
+				//	}
+				//	else {
+				//		self.location.href = "/Fighting/ViewList"
+				//	}
+				//}, function (res) {
+				//	alert("身份获取失败，请重试");
+				//	console.log(res);
+
+
+				//});
+				var vueThis = this;
+				dd.ready(function () {
+
+					dd.runtime.permission.requestAuthCode({
+						corpId: "ding11267caf60aa942435c2f4657eb6378f", // 企业id
+						onSuccess: function (info) {
+							console.log(this);
+							//alert(info.code)
+							vueThis.LoginIn(info.code, vueThis);
+						}
+					});
+				});
+
+			},
+			LoginIn: function (code, vueThis) {
+				console.log(this);
+				//alert(code)
+				//alert(info.code)
+				// 通过该免登授权码可以获取用户身份
+				let url = '/Fighting/LoginIn';
+			
+				
+				vueThis.$http.post(url, {code:code }, { emulateJSON: true }).then(function (res) {
+					//alert("s有返回")
+					if (res.body == 1) {
+						
+						self.location.href = "/Fighting/ViewList"
+					}
+					else {
+						alert("身份获取失败，请重试");
+
+						//self.location.href = "/Fighting/ViewList"
+					}
+				}, function (res) {
+					alert("身份获取失败，请重试");
+					console.log(res);
+
+
+				});
+			}
+		}
+	});
+
+
+</script>

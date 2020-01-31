@@ -1,0 +1,47 @@
+﻿@*@{
+		Layout = "~/Views/Shared/View.cshtml";
+	}*@
+
+@*<head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1,minimum-scale=1.0,maximum-scale=1.0,user-scalable=no">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<!-- 引入样式 -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/vant@1.6/lib/index.css">
+		<title>Fighting2020</title>
+	</head>
+	<body>
+		<div id="app">
+			<van-tabbar v-model="active">
+				<van-tabbar-item icon="home-o" v-on:click="tab('/Fighting/Index')">我是车主</van-tabbar-item>
+				<van-tabbar-item icon="search" v-on:click="tab('/Fighting/ViewList')">我要拼车</van-tabbar-item>
+
+			</van-tabbar>
+
+		</div>
+	</body>
+
+	<!-- 引入组件 -->
+	<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/vant@1.6/lib/vant.min.js"></script>
+	<script src="https://unpkg.com/vue-router/dist/vue-router.js"></script>
+
+	<script>
+		// 必须实例化
+		var app = new Vue({
+			el: "#app",
+			data: {
+				active: 0
+			},
+
+			methods: {
+				tab: function (value) {
+
+					self.location.href = value
+				}
+			}
+
+
+
+		});
+	</script>*@

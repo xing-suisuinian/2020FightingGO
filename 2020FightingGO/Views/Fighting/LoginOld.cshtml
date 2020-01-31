@@ -1,0 +1,57 @@
+﻿
+@{
+	Layout = "~/Views/Shared/View_Layout.cshtml";
+}
+<script src="~/Scripts/vue.min.js"></script>
+<script src="~/Scripts/vant.min.js"></script>
+
+<script src="~/Scripts/vue-resource.min.js"></script>
+<script type="text/javascript" src="http://g.alicdn.com/dingding/open-develop/1.5.1/dingtalk.js"></script>
+<div id="app">
+
+</div>
+<script type="text/javascript">
+	var app = new Vue({
+		el: "#app",
+		data: {
+			code: "123",
+		},
+		created: function () {
+			this.login();
+		},
+		methods: {
+
+			login: function () {
+
+				dd.ready(function () {
+
+					dd.runtime.permission.requestAuthCode({
+						corpId: "ding11267caf60aa942435c2f4657eb6378f", // 企业id
+						onSuccess: function (info) {
+							alert(info.code)
+							// 通过该免登授权码可以获取用户身份
+							let url = '/Fighting/LoginIn';
+							this.$http.post(url, { code: info.code }, { emulateJSON: true }).then(function (res) {
+								alert(res.body)
+								if (res.body == 1) {
+									self.location.href = "/Fighting/Index"
+								}
+								else {
+									self.location.href = "/Fighting/ViewList"
+								}
+							}, function (res) {
+								alert("身份获取失败，请重试");
+								console.log(res);
+
+
+							});
+						}
+					});
+				});
+
+			}
+		}
+	});
+
+
+</script>

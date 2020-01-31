@@ -1,0 +1,189 @@
+﻿
+@{
+	Layout = "~/Views/Shared/View_Layout.cshtml";
+}
+
+<html>
+
+<body>
+	<div id="app">
+		<div>
+			<van-cell-group>
+
+				<div>
+					<van-field v-model="Driver" label="车主姓名" />
+
+				</div>
+				<van-divider />
+				<div>
+					<van-field v-model="Tel" type="tel" label="手机号" />
+				</div>
+				<div>
+
+					<van-field v-model="SeatNumber" type="digit" label="提供座位数" />
+				</div>
+
+				<div>
+					<van-field v-model="DeparturePlace" label="出发地点" />
+				</div>
+				<div>
+					<van-field v-model="Destination" label="目的地" />
+				</div>
+				<div class="van-cell van-field">
+					<div class="van-cell__title van-field__label"><span>途经高桥</span></div>
+					<van-checkbox v-model="IsGaoQiao" shape="square" icon-size="30px" label-position="left" v-on:change="checkGaoqiao"></van-checkbox>
+
+				</div>
+				<div>
+
+					<van-field v-model="DepartureTime" label="出发时间" v-on:click="showTimePicker(1)" readonly />
+				</div>
+				<div>
+					<van-button type="primary" size="normal" block v-on:click="addSave()">提交</van-button>
+				</div>
+			</van-cell-group>
+		</div>
+		<div></div>
+		<div>
+			<van-popup v-model="show" position='bottom'>
+				<!--弹出层-->
+				@*<van-datetime-picker @confirm="confirm"
+					@cancel="cancel"
+					v-model="currentDate"
+					type="date" />*@
+				<van-datetime-picker v-model="PickTime"
+									 v-on:cancel="showTimePicker(0)"
+									 v-on:confirm="confirm()"
+									 type="datetime" />
+			</van-popup>
+		</div>
+		<van-tabbar v-model="active">
+			<van-tabbar-item icon="home-o" v-on:click="tab('/Fighting/Index')">我是车主</van-tabbar-item>
+			<van-tabbar-item icon="search" v-on:click="tab('/Fighting/ViewList')">我要拼车</van-tabbar-item>
+
+		</van-tabbar>
+
+	</div>
+</body>
+</html>
+
+<script>
+	// 必须实例化
+	var app = new Vue({
+		el: "#app",
+		data: {
+			active: 0,
+			Driver: "",
+			Tel: "",
+			SeatNumber: 4,
+			DepartureTime: new Date(),
+			PickTime: new Date(),
+			DeparturePlace: "高桥办公室",
+			Destination: "可孚总部",
+			minDate: new Date(),
+			show: 0,
+			IsGaoQiao: 1
+
+
+		},
+		created: function () {
+			this.FormatterDate();
+			this.Driver = this.getCookie("name");
+			this.Tel=this.getCookie("mobile");
+		},
+		methods: {
+			tab: function (value) {
+
+				self.location.href = value
+			},
+			showTimePicker: function (value) {
+				//alert(value);
+				this.show = value;
+			},
+			confirm: function (value) {
+				//this.DepartureTime = value;
+				this.FormatterDate();
+				this.showTimePicker(0);
+			},
+			FormatterDate: function () {
+
+				var date = this.PickTime;
+				var seperator1 = "-";
+				var seperator2 = ":";
+				var year = date.getFullYear();
+				var month = date.getMonth() + 1;
+				var strDate = date.getDate();
+				var hour = date.getHours();
+				var Minutes = date.getMinutes();
+
+				if (month >= 1 && month <= 9) {
+					month = "0" + month;
+				}
+				if (strDate >= 0 && strDate <= 9) {
+					strDate = "0" + strDate;
+				}
+				var result =
+					year +
+					seperator1 +
+					month +
+					seperator1 +
+					strDate +
+					" " +
+					hour +
+					seperator2 +
+					Minutes +
+					seperator2 +
+					"00";
+
+				this.DepartureTime = result;
+				//return result;
+			},
+			checkGaoqiao: function (value) {
+				if (value) {
+					this.IsGaoQiao = 1
+				}
+				else {
+					this.IsGaoQiao = 0
+				}
+
+			},
+			addSave: function () {
+				let url = '/Fighting/AddSave';
+				this.$http.post(url, { Driver: this.Driver, Tel: this.Tel, SeatNumber: this.SeatNumber, DepartureTime: this.DepartureTime, DeparturePlace: this.DeparturePlace, Destination: this.Destination, IsGaoQiao: this.IsGaoQiao }, { emulateJSON: true }).then(function (res) {
+					vant.Dialog.alert({
+						title: res.body.state,
+						message: res.body.msg
+					}).then(() => {
+						// on close
+					});
+				}, function (res) {
+
+					console.log(res);
+				});
+			},
+			getCookie: function (NameOfCookie) {
+				if (document.cookie.length > 0) {
+					begin = document.cookie.indexOf(NameOfCookie + "=");
+					if (begin !== -1) {
+						begin += NameOfCookie.length + 1;
+						end = document.cookie.indexOf(";", begin);
+						if (end === -1) end = document.cookie.length;
+						return unescape(document.cookie.substring(begin, end));
+					}
+				}
+				return null;
+			},
+		}
+
+
+
+
+
+	});
+
+
+</script>
+
+
+
+

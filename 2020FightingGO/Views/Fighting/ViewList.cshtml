@@ -1,0 +1,170 @@
+﻿@{
+		Layout = "~/Views/Shared/View_Layout.cshtml";
+	}
+
+
+
+
+	<div id="app">
+		<div>
+			<van-search v-model="queryStr" placeholder="请输入搜索关键词" />
+
+		</div>
+		<div>
+			<van-list v-model="loading"
+					  :finished="finished"
+					  finished-text="没有更多了">
+				@*<van-cell v-for="item in list" :key="item.ID" :title="item.ID" />*@
+				<div v-for="item in list" :key="item.ID">
+					<van-panel title="行程">
+						<van-row>
+							<van-col span="1"></van-col>
+							<van-col span="6">{{item.DeparturePlace}} </van-col>
+							<van-col span="3">——</van-col>
+							<van-col span="6">{{item.Destination}}</van-col>
+							<van-col span="4">空位：</van-col>
+							<van-col span="1">{{item.FreeSeat}}</van-col>
+
+						</van-row>
+						<van-row>
+							<van-col span="1"></van-col>
+							<van-col span="6">出发时间： </van-col>
+							<van-col span="16"> {{formatter(item.DepartureTime)}}</van-col>
+							<van-col span="1"></van-col>
+
+						</van-row>
+						<van-row>
+							<van-col span="1"></van-col>
+							<van-col span="6">联系人： </van-col>
+							<van-col span="6">{{item.Driver}}</van-col>
+							<van-col span="2">Tel：</van-col>
+							<van-col span="8">{{item.Tel}}</van-col>
+							<van-col span="1"></van-col>
+						</van-row>
+						<van-row>
+							<van-col span="1"></van-col>
+							<van-col span="6">途经高桥： </van-col>
+							<van-col span="5">{{item.IsGaoQiao}} </van-col>
+							
+							<van-col span="10"><van-button v-on:click="Join(item.ID)" size="small" type="danger" block>加入</van-button></van-col>
+							<van-col span="2"></van-col>
+						</van-row>
+						
+					</van-panel>
+					@*<van-divider style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px' }">
+						
+					</van-divider>*@
+				</div>
+				
+			</van-list>
+		</div>
+
+		<van-tabbar v-model="active">
+			<van-tabbar-item icon="home-o" v-on:click="tab('/Fighting/Index')">我是车主</van-tabbar-item>
+			<van-tabbar-item icon="search" v-on:click="tab('/Fighting/ViewList')">我要拼车</van-tabbar-item>
+
+		</van-tabbar>
+
+	</div>
+
+
+<script>
+	// 必须实例化
+	var app = new Vue({
+		el: "#app",
+		data: {
+			active: 1,
+			 list: [],
+			loading: false,
+			finished: false,
+			page: 0,
+			//offset: 0,
+			pagesize:10,
+			IsGaoQiao: 1,
+			DeparturePlace:"",
+			DepartureTime: new Date(),
+			Destination: "",
+			queryStr:"",
+
+		},
+		created: function () {
+			this.query();
+		},
+		methods: {
+			tab: function (value) {
+
+				self.location.href = value
+			},
+			Join: function (ID) {
+				
+				let url = '/Fighting/JoinSave';
+				this.$http.post(url, { ID: ID }, { emulateJSON: true }).then(function (res) {
+					vant.Dialog.alert({
+						title: res.body.state,
+						message: res.body.msg
+					}).then(() => {
+						// on close
+					});
+				}, function (res) {
+
+					console.log(res);
+				});
+			},
+			//onLoad: function () {
+			//	this.query();
+			//	//setTimeout(() => {
+			//	//	for (let i = 0; i < 10; i++) {
+			//	//		this.list.push(this.list.length + 1);
+			//	//	}
+
+			//	//	// 加载状态结束
+					
+
+			//	//	// 数据全部加载完成
+			//	//	if (this.list.length >= 40) {
+			//	//		this.finished = true;
+			//	//	}
+			//	//}, 1000);
+			//},
+			query: function () {
+				let url = '/Fighting/getList';
+				this.$http.get(url, { params: { page: this.page, pagesize: this.pagesize, IsGaoQiao: this.IsGaoQiao, DepartureTime: this.DepartureTime, Destination: this.Destination, DeparturePlace: this.DeparturePlace } }, { emulateJSON: true }).then(function (res) {
+					console.log(res.body);
+					this.loading = false;
+
+					if (res.body.length < this.pagesize) {
+						this.finished = true;
+					}
+					if (res.body.length > 0) {
+						for (let i = 0; i < res.body.length; i++) {
+							this.list.push(res.body[i]);
+						}
+						console.log(this.list)
+					}
+				}, function (res) {
+
+					console.log(res);
+				});
+			},
+			formatter: function (value) {
+				
+					if (value == null || value == '') {
+						return '';
+					}
+					var dt = parseToDate(value);
+					return dt.format("yyyy-MM-dd hh:mm:ss");
+				
+			},
+			
+		}
+
+
+
+
+
+	});
+</script>
+
+
+
+
