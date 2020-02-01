@@ -1,6 +1,6 @@
 ﻿@{
-		Layout = "~/Views/Shared/View_Layout.cshtml";
-	}
+	Layout = "~/Views/Shared/View_Layout.cshtml";
+}
 
 
 
@@ -17,7 +17,7 @@
 				  v-on:load="onLoad">
 			@*<van-cell v-for="item in list" :key="item.ID" :title="item.ID" />*@
 			<div v-for="item in list" :key="item.ID">
-				<van-panel title="行程">
+				<van-panel title="行程"  >
 					<van-row>
 						<van-col span="1"></van-col>
 						<van-col span="6">{{item.DeparturePlace}} </van-col>
@@ -61,7 +61,7 @@
 						</van-col>
 						<van-col span="1"></van-col>
 						<van-col span="6" v-if="item.IsCancel == '0'">
-							<van-button v-on:click="Join(item.ID)" size="small" type="primary" block>加入</van-button>
+							<van-button v-on:click="Cancel(item.ID)" size="small" type="primary" block>取消行程</van-button>
 						</van-col>
 						<van-col span="6" v-else>
 							<van-button size="small" type="danger" block>已取消</van-button>
@@ -79,30 +79,30 @@
 	</div>
 	<div>
 		<van-popup v-model="show" position='bottom' :style="{ height: '45%',backgroud:'#ff0000' }">
-					<van-list>
-			@*<van-cell v-for="item in list" :key="item.ID" :title="item.ID" />*@
-			<div v-for="item in detailList" :key="item.ID">
-				<van-panel title="">
-					
+			<van-list>
+				@*<van-cell v-for="item in list" :key="item.ID" :title="item.ID" />*@
+				<div v-for="item in detailList" :key="item.ID">
+					<van-panel title="">
 
-			
-					<van-row >
-						<van-col span="1"></van-col>
-						<van-col span="5">联系人： </van-col>
-						<van-col span="7">{{item.Passenger}}</van-col>
-						<van-col span="3">Tel：</van-col>
-						<van-col span="7">{{item.Tel}}</van-col>
-						<van-col span="1"></van-col>
-					</van-row>
-					
-				</van-panel>
-				@*<van-divider style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px' }">
 
-					</van-divider>*@
-			</div>
 
-		</van-list>
-	
+						<van-row>
+							<van-col span="1"></van-col>
+							<van-col span="5">联系人： </van-col>
+							<van-col span="7">{{item.Passenger}}</van-col>
+							<van-col span="3">Tel：</van-col>
+							<van-col span="7">{{item.Tel}}</van-col>
+							<van-col span="1"></van-col>
+						</van-row>
+
+					</van-panel>
+					@*<van-divider style="{ color: '#1989fa', borderColor: '#1989fa', padding: '0 16px' }">
+
+						</van-divider>*@
+				</div>
+
+			</van-list>
+
 		</van-popup>
 	</div>
 	<van-tabbar v-model="active">
@@ -120,7 +120,7 @@
 	var app = new Vue({
 		el: "#app",
 		data: {
-			active: 1,
+			active: 2,
 			list: [],
 			detailList:[],
 			loading: false,
@@ -148,7 +148,7 @@
 				this.query();
 				this.page++;
 			},
-			
+
 			Detail: function (ID) {
 				this.show = 1;
 				this.detailList.splice(0, this.detailList.length);
@@ -160,7 +160,7 @@
 						for (let i = 0; i < res.body.length; i++) {
 							this.detailList.push(res.body[i]);
 						}
-						
+
 					}
 				}, function (res) {
 
@@ -168,12 +168,29 @@
 				});
 			},
 			Join: function (ID) {
+
+				let url = '/Fighting/JoinSave';
+				this.$http.post(url, { ID: ID }, { emulateJSON: true }).then(function (res) {
+					this.search();
+					vant.Dialog.alert({
+						title: res.body.state,
+						message: res.body.msg
+					}).then(() => {
+						// on close
+					});
+				}, function (res) {
+
+					console.log(res);
+
+				});
+			},
+			Cancel: function (ID) {
 				vant.Dialog.confirm({
 					title: '提示',
-					message: '确认加入该行程吗'
+					message: '确认取消该行程吗'
 				}).then(() => {
 					// on confirm
-					let url = '/Fighting/JoinSave';
+					let url = '/Fighting/CancelSave';
 					this.$http.post(url, { ID: ID }, { emulateJSON: true }).then(function (res) {
 						this.search();
 						vant.Dialog.alert({
@@ -192,32 +209,16 @@
 				});
 				
 			},
-			//onLoad: function () {
-			//	this.query();
-			//	//setTimeout(() => {
-			//	//	for (let i = 0; i < 10; i++) {
-			//	//		this.list.push(this.list.length + 1);
-			//	//	}
-
-			//	//	// 加载状态结束
-					
-
-			//	//	// 数据全部加载完成
-			//	//	if (this.list.length >= 40) {
-			//	//		this.finished = true;
-			//	//	}
-			//	//}, 1000);
-			//},
 			search: function () {
 				this.page = 0;
 				this.list.splice(0, this.list.length);
 				this.query();
 			},
 			query: function () {
-				
+
 				let url = '/Fighting/getList';
-				this.$http.get(url, { params: { page: this.page, pagesize: this.pagesize, IsGaoQiao: this.IsGaoQiao, DepartureTime: this.DepartureTime, Destination: this.Destination, DeparturePlace: this.DeparturePlace, queryStr: this.queryStr } }, { emulateJSON: true }).then(function (res) {
-				
+				this.$http.get(url, { params: { page: this.page, pagesize: this.pagesize, IsGaoQiao: this.IsGaoQiao, DepartureTime: this.DepartureTime, Destination: this.Destination, DeparturePlace: this.DeparturePlace, queryStr: this.queryStr,isMy:1 } }, { emulateJSON: true }).then(function (res) {
+
 					console.log(res.body);
 					this.loading = false;
 
@@ -237,15 +238,15 @@
 				});
 			},
 			formatter: function (value) {
-				
+
 					if (value == null || value == '') {
 						return '';
 					}
 					var dt = parseToDate(value);
 					return dt.format("yyyy-MM-dd hh:mm:ss");
-				
+
 			},
-			
+
 		}
 
 

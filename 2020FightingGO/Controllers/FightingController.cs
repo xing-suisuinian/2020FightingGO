@@ -38,11 +38,24 @@ namespace _2020FightingGO.Controllers
 		{
 			return View();
 		}
+		public ActionResult ViewMyList()
+		{
+			return View();
+		}
+		public ActionResult ViewMyJoinList()
+		{
+			return View();
+		}
 
 		public JsonResult AddSave(T_MainInfo  model)
 		{
+			DateTime now = DateTime.Now;
 			DateTime minTime = model.DepartureTime.AddMinutes(-15);
 			DateTime maxTime = model.DepartureTime.AddMinutes(15);
+			if (model.DepartureTime < now)
+			{
+				return Json(new { state = "Fail", msg = "请发布时间大于现在的行程" });
+			}
 			T_MainInfo exisModel= db.T_MainInfo.FirstOrDefault(a => a.Driver == model.Driver && a.DepartureTime > minTime && a.DepartureTime < maxTime);
 			if (exisModel == null)
 			{
@@ -72,7 +85,16 @@ namespace _2020FightingGO.Controllers
 		{
 			string Passenger = Server.UrlDecode(Request.Cookies["name"].Value);
 			string Tel = Server.UrlDecode(Request.Cookies["mobile"].Value);
+			T_MainDetail existMainDetail = db.T_MainDetail.FirstOrDefault(a => a.PID == ID && a.Passenger == Passenger);
+			if (existMainDetail != null)
+			{
+				return Json(new { state = "Fail", msg ="您已加入该行程，请勿重复哦" });
+			}
 			T_MainInfo maininfo = db.T_MainInfo.Find(ID);
+			if (maininfo.FreeSeat == 0)
+			{
+				return Json(new { state = "Fail", msg = "小伙伴已经满了哦，请选择其他行程加入" });
+			}
 			maininfo.FreeSeat = maininfo.FreeSeat - 1;
 			if (maininfo.Passengers == null)
 			{
@@ -80,8 +102,9 @@ namespace _2020FightingGO.Controllers
 			}
 			else
 			{
-				maininfo.Passengers = maininfo.Passengers+Passenger;
+				maininfo.Passengers = maininfo.Passengers+","+Passenger;
 			}
+			
 			db.Entry<T_MainInfo>(maininfo).State = System.Data.Entity.EntityState.Modified;
 			
 			T_MainDetail mainDetail = new T_MainDetail()
@@ -96,7 +119,7 @@ namespace _2020FightingGO.Controllers
 			try
 			{
 				db.SaveChanges();
-				return Json(new { state = "Success", msg = "保存成功" });
+				return Json(new { state = "Success", msg = "保存成功,记得及时与车主取得联系哦" });
 			}
 			catch (Exception e)
 			{
@@ -106,17 +129,92 @@ namespace _2020FightingGO.Controllers
 
 
 		}
-		public JsonResult getList(int page,int pagesize, int IsGaoQiao,string DepartureTime,string Destination,string DeparturePlace)
+
+		public JsonResult CancelSave(int ID)
 		{
+			string name = Server.UrlDecode(Request.Cookies["name"].Value);
+			//string name = "黄幸&夕影";
+			T_MainInfo maininfo = db.T_MainInfo.Find(ID);
+			if (name == maininfo.Driver)
+			{
+				maininfo.IsCancel = 1;
+			}
+			
+			else
+			{
+				return Json(new { state = "Fail", msg = "不允许取消他人发布的行程"});
+			}
+			db.Entry<T_MainInfo>(maininfo).State = System.Data.Entity.EntityState.Modified;
+
+			
+			
+
+			try
+			{
+				db.SaveChanges();
+				return Json(new { state = "Success", msg = "保存成功,请记得与相关小伙伴联系，通知您已取消本次行程哦" });
+			}
+			catch (Exception e)
+			{
+				return Json(new { state = "Fail", msg = e.Message });
+			}
+		}
+		//
+		public JsonResult CancelJoinSave(int ID)
+		{
+			string name = Server.UrlDecode(Request.Cookies["name"].Value);
+			//string name = "黄幸&夕影";
+			T_MainInfo maininfo = db.T_MainInfo.Find(ID);
+			maininfo.FreeSeat = maininfo.FreeSeat + 1;
+			maininfo.Passengers = maininfo.Passengers.Replace(name, "").Replace(",,", ",");
+			T_MainDetail deleteMainDetail = db.T_MainDetail.FirstOrDefault(a => a.Passenger == name && a.PID == ID);
+			db.T_MainDetail.Remove(deleteMainDetail);
+			db.Entry<T_MainInfo>(maininfo).State = System.Data.Entity.EntityState.Modified;
+			try
+			{
+				db.SaveChanges();
+				return Json(new { state = "Success", msg = "保存成功,请记得与相关小伙伴联系，通知您已取消本次行程哦" });
+			}
+			catch (Exception e)
+			{
+				return Json(new { state = "Fail", msg = e.Message });
+			}
+		}
+		public JsonResult getList(int page,int pagesize, int IsGaoQiao,string DepartureTime,string Destination,string DeparturePlace,string queryStr,int isMy=0, int isMyJoin=0)
+		{
+			string name = Server.UrlDecode(Request.Cookies["name"].Value);
+			//string name = "黄幸&夕影";
 			DateTime now = DateTime.Now.AddMinutes(-5);
 			IQueryable<T_MainInfo> queryData = db.T_MainInfo.Where(a=>a.DepartureTime> now && a.FreeSeat>0);
 			//if (IsGaoQiao == 1)
 			//{
 			//	queryData = queryData.Where(a => a.IsGaoQiao == IsGaoQiao);
 			//}
+			if (!string.IsNullOrWhiteSpace(queryStr))
+			{
+				queryData = queryData.Where(a => a.DeparturePlace.Contains(queryStr)|| a.Destination.Contains(queryStr)||a.Driver.Contains(queryStr));
+			}
+			if (isMy == 1)
+			{
+				queryData = queryData.Where(a=>a.Driver== name);
+			}
+			if (isMyJoin == 1)
+			{
+				queryData = queryData.Where(a => a.Passengers.Contains(name));
+			}
 
-			List<T_MainInfo> list = queryData.OrderBy(a => a.DepartureTime).Skip(page * pagesize).Take(pagesize).ToList();
+			List<T_MainInfo> list = queryData.OrderBy(a =>new { a.DepartureTime,a.IsCancel } ).Skip(page * pagesize).Take(pagesize).ToList();
 			return Json(list,JsonRequestBehavior.AllowGet);
+		}
+		//getDetail
+		public JsonResult getDetail(int ID)
+		{
+			
+			IQueryable<T_MainDetail> queryData = db.T_MainDetail.Where(a => a.PID ==ID);
+			
+
+			List<T_MainDetail> list = queryData.ToList();
+			return Json(list, JsonRequestBehavior.AllowGet);
 		}
 		public JsonResult LoginIn(string code= "c5c4f7fdd63d3e7c9c32cc9f9f1944b0")
 		{
